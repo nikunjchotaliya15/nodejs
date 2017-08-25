@@ -48,7 +48,7 @@ var query = {
       {
         field: 'SCM.name',
         encloseField: false,
-        alias: 'sub_category'
+        alias: 'sub_category_name'
       },
       {
         field: 'SCM.description',

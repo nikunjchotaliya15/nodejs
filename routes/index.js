@@ -12,6 +12,7 @@ router.get('*', function(req, res, next) {
       });
     } else {
       //next();
+      // console.log(req.session.userInfo.userRights);
       commonRender(req, res, req.url);
     }
   }
@@ -33,6 +34,7 @@ router.get('/', function(req, res, next) {
 module.exports = router;
 
 function commonRender(req, res, moduleName) {
+  // console.log("===== MODULE NAME ========",moduleName);
   moduleName = (moduleName.indexOf('/') == 0 ? moduleName.substr(1, moduleName.length) : moduleName);
   var objRight = checkUserRights(req, moduleName);
   var objModules = getModuleName(req);

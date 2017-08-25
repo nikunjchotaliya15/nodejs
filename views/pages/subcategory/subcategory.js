@@ -3,7 +3,7 @@ $(document).ready(function () {
 });
 
 category = {
-  category_id: -1,
+  sub_category_id: -1,
   categories: [],
   imageObj: {},
   categoryTable: {},
@@ -11,13 +11,18 @@ category = {
   init: function () {
     category.categories.push({
       name: "category_name",
-      width: "20%",
+      width: "30%",
       targets: 0
     });
     category.categories.push({
-      name: "description",
-      width: "50%",
+      name: "sub_category_name",
+      width: "30%",
       targets: 1
+    });
+    category.categories.push({
+      name: "description",
+      width: "40%",
+      targets: 2
     });
 
     if (canAddEdit > 0) {
@@ -45,25 +50,6 @@ category = {
         isVisible: true,
         buttons: buttons
       })
-      category.categories.push({
-        isActionButton: true,
-        targets: 2,
-        width: "10%",
-        orderable: false,
-        searchable: false,
-        isVisible: true,
-        buttons: [{
-          buttonObj: Constants.staticHtml.approveButton,
-          onClickEvent: category.onActiveClick,
-          dataRowField: "is_active",
-          compareValue: 1
-        }, {
-          buttonObj: Constants.staticHtml.rejectButton,
-          onClickEvent: category.onActiveClick,
-          dataRowField: "is_active",
-          compareValue: 0
-        }]
-      })
     }
     category.getData();
   },
@@ -71,13 +57,15 @@ category = {
     var headers = {
       Authorization: $.cookie(Constants.User.authToken)
     };
-    var categoryUrl = Constants.Api.getCategory + '-1/-1'
+    var categoryUrl = Constants.Api.getSubCategory + "-1";
     Api.get(categoryUrl, headers, function (error, res) {
+      // alert(res.data[4].sub_category_id);
       if (error) {
         common.showMessage(error.error.message, true);
       }
+      // alert(res.data[0].category_id);
       if (res != undefined && res.status == true) {
-        category.categoryTable = common.bindCommonDatatable(res.data, category.categories, "gridCategory", objModules.category);
+        category.categoryTable = common.bindCommonDatatable(res.data, category.categories, "gridCategory", objModules.subCategory);
       } else if (res != undefined && res.status == false) {
         common.showMessage(res.error.message, true);
       }
@@ -90,12 +78,13 @@ category = {
         category.saveDisabled = true;
         var data = {};
         data = common.getFormValues($("#frmCategory"));
-        data.category_id = category.category_id;
+        data.sub_category_id = category.sub_category_id;
         data.imageObj = category.imageObj;
         var headers = {
           Authorization: $.cookie(Constants.User.authToken)
         };
-        Api.post(Constants.Api.addUpdateCategory, headers, data, function (error, res) {
+        Api.post(Constants.Api.addUpdateSubCategory, headers, data, function (error, res) {
+          // alert(res.data);
           if (res != undefined && res.status == true) {
             common.showMessage(res.data.message, false);
             category.clearValues(true);
@@ -129,7 +118,7 @@ category = {
     category.clearValues(true);
   },
   delete: function (currentRow) {
-    common.deleteData(objModules.category, Constants.Api.deleteCategory, currentRow.data().category_id, function (res) {
+    common.deleteData(objModules.category, Constants.Api.deleteSubCategory, currentRow.data().sub_category_id, function (res) {
       if (res != undefined && res.status == true) {
         currentRow.remove().draw(false);
         common.showMessage(res.message, false);
@@ -141,11 +130,10 @@ category = {
   edit: function (currentRow) {
     event.preventDefault();
     var currentCategory = currentRow.data();
-    alert(currentCategory.category_id);
-    if (currentCategory != undefined && currentCategory.category_id > 0) {
-      category.category_id = currentCategory.category_id;
-      common.showHideDiv(false, objModules.category);
-
+    if (currentCategory != undefined && currentCategory.sub_category_id > 0) {
+      category.sub_category_id = currentCategory.sub_category_id;
+      objModules.subCategory.displayName = "Category";
+      common.showHideDiv(false, objModules.subCategory);
       common.fillFormValues($("#frmCategory"), currentCategory);
 
       $('#imageCategory').attr("src", currentCategory.image_name);

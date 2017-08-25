@@ -70,11 +70,17 @@ var getSubCategory = (sub_categoryID, isActive, dbServerDateTime, limit, cb) => 
   //   });
   // }
 
-  if (sub_categoryID < 0 && isActive < 0) {
+  if (sub_categoryID <= 0)
     delete getSubCategoryQuery.filter;
-  } else {
+  else
     getSubCategoryQuery.filter = sub_categoryFilter;
-  }
+
+
+  // if (sub_categoryID < 0 && isActive < 0) {
+  //   delete getSubCategoryQuery.filter;
+  // } else {
+  //   getSubCategoryQuery.filter = sub_categoryFilter;
+  // }
 
   // getCategoryQuery.limit = limit;
   common.executeQuery(getSubCategoryQuery, cb);
