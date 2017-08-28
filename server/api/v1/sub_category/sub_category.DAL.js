@@ -14,11 +14,11 @@ var dbDateFormat = constant.appConfig.DB_DATE_FORMAT;
  * @param  {Function} cb         [description]
  * @return {[type]}              [description]
  */
-var createSubCategory = (fieldValue, cb) => {
+var createSubCategory = async (fieldValue) => {
   debug("sub_category.DAL -> createSubCategory");
   var createSubCategory = common.cloneObject(query.createSubCategory);
   createSubCategory.insert = fieldValue;
-  common.executeQuery(createSubCategory, cb);
+  return await common.executeQuery(createSubCategory);
 };
 
 /**
@@ -30,12 +30,12 @@ var createSubCategory = (fieldValue, cb) => {
  * @param  {Function} cb         [description]
  * @return {[type]}              [description]
  */
-var updateSubCategory = (fieldValue, sub_categoryID, cb) => {
+var updateSubCategory = async (fieldValue, sub_categoryID) => {
   debug("sub_category.DAL -> updateSubCategory");
   var updateSubCategory = common.cloneObject(query.updateSubCategory);
   updateSubCategory.update = fieldValue;
   updateSubCategory.filter.value = sub_categoryID;
-  common.executeQuery(updateSubCategory, cb);
+  return await common.executeQuery(updateSubCategory);
 };
 
 /**
@@ -47,12 +47,13 @@ var updateSubCategory = (fieldValue, sub_categoryID, cb) => {
  * @param  {Function} cb               [description]
  * @return {[type]}                    [description]
  */
-var getSubCategory = (sub_categoryID, isActive, dbServerDateTime, limit, cb) => {
+var getSubCategory = async (sub_categoryID, isActive, dbServerDateTime, limit) => {
   debug("sub_category.DAL -> getSubCategory");
   var getSubCategoryQuery = common.cloneObject(query.getSubCategoryQuery);
   var sub_categoryFilter = {
     and: []
   }
+
   if (sub_categoryID > -1) {
     sub_categoryFilter.and.push({
       field: 'pk_subcategoryID',
@@ -83,7 +84,7 @@ var getSubCategory = (sub_categoryID, isActive, dbServerDateTime, limit, cb) => 
   // }
 
   // getCategoryQuery.limit = limit;
-  common.executeQuery(getSubCategoryQuery, cb);
+  return await common.executeQuery(getSubCategoryQuery);
 };
 
 
@@ -97,7 +98,7 @@ var getSubCategory = (sub_categoryID, isActive, dbServerDateTime, limit, cb) => 
  * @param  {Function} cb         [description]
  * @return {[type]}              [description]
  */
-var checkSubCategoryIDValid = (sub_categoryID, cb) => {
+var checkSubCategoryIDValid = async (sub_categoryID) => {
   debug("sub_category.DAL -> checkSubCategoryIDValid");
   var checkSubCateGoryValid = common.cloneObject(query.checkSubCateGoryValidQuery);
   checkSubCateGoryValid.filter = {
@@ -107,7 +108,7 @@ var checkSubCategoryIDValid = (sub_categoryID, cb) => {
       value: sub_categoryID
     }]
   }
-  common.executeQuery(checkSubCateGoryValid, cb);
+  return await common.executeQuery(checkSubCateGoryValid);
 };
 
 /**
@@ -118,11 +119,11 @@ var checkSubCategoryIDValid = (sub_categoryID, cb) => {
  * @param  {Function} cb         [description]
  * @return {[type]}              [description]
  */
-var removeSubCategory = (sub_categoryId, cb) => {
+var removeSubCategory = async (sub_categoryId) => {
   debug("sub_category.DAL -> removeSubCategory");
   var removeSubCategoryQuery = common.cloneObject(query.removeSubCategoryQuery);
   removeSubCategoryQuery.filter.value = sub_categoryId;
-  common.executeQuery(removeSubCategoryQuery, cb);
+  return await common.executeQuery(removeSubCategoryQuery);
 };
 
 /**
@@ -133,7 +134,7 @@ var removeSubCategory = (sub_categoryId, cb) => {
  * @param  {Function} cb         [description]
  * @return {[type]}              [description]
  */
-var checkSubCategoryIsExist = (sub_category_name, cb) => {
+var checkSubCategoryIsExist = async (sub_category_name) => {
   debug("sub_category.DAL -> checkDeleteSubCategoryIDValid");
   var checkSubCateGoryValid = common.cloneObject(query.checkSubCateGoryValidQuery);
   checkSubCateGoryValid.filter = {
@@ -143,7 +144,7 @@ var checkSubCategoryIsExist = (sub_category_name, cb) => {
       value: sub_category_name
     }]
   }
-  common.executeQuery(checkSubCateGoryValid, cb);
+  return await common.executeQuery(checkSubCateGoryValid);
 };
 
 module.exports = {

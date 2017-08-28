@@ -41,7 +41,7 @@ var logger = function(request, response, next) {
   if (request.session.userInfo !== undefined) {
     userId = request.session.userInfo.userId;
   }
-  
+
   var type = request.method;
   var headers = JSON.stringify(request.headers);
   var body = JSON.stringify(request.body);
@@ -81,7 +81,7 @@ var logger = function(request, response, next) {
   }else{
     next();
   }
-  
+
 };
 
 var checkAccessToken = function(request, response, next) {
@@ -212,7 +212,7 @@ var checkAccessToken = function(request, response, next) {
 
 var userRightsByAPI = function(request, response, next) {
   var apiURL = request.url.split('/');
-  
+
   if (request.session.userInfo == undefined) {
     return response.send({
       status: false,

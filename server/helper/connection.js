@@ -11,29 +11,31 @@ var connectionpool = mysql.createPool(config.dbConfig);
  * @param  {Function} cb    callback function with response
  * @api private
  */
-exports.executeRawQuery = function(query, cb) {
+exports.executeRawQuery = function(query) {
   //debug('constants: ', constant);
-  connectionpool.getConnection(function(err, connection) {
+  return new Promise(function(resolve,reject){
+    connectionpool.getConnection(function(err, connection) {
     if (err) {
       var errStatus = constant.status['DB_CONN_ERR'];
       // debug('db-conn-err: ', err);
-      cb({
+      reject({
         status: false,
         error: errStatus
       });
       return;
     }
     connection.query(query, function(err, result) {
+
       if (err) {
         debug(err);
         if (err.code === "ER_DUP_ENTRY") {
-          cb({
+          reject({
             status: false,
             error: constant.status.ER_DUP_ENTRY
           });
         } else {
           var errStatus = constant.status['DB_QUERY_ERR'];
-          cb({
+          reject({
             status: false,
             error: errStatus
           });
@@ -41,13 +43,14 @@ exports.executeRawQuery = function(query, cb) {
         connection.release();
         return;
       }
-      cb({
+      resolve({
         status: true,
         content: result
       });
       connection.release();
     }); // END query
   }); // END connection
+  })
 };
 
 exports.executeRawQueryWithTransactions = function(querys, cb) {
@@ -105,7 +108,7 @@ exports.executeRawQueryWithTransactions = function(querys, cb) {
             cb({
               status: true,
               content:  constant.status.MSG_TRANSACTION_SUCCESS
-            });            
+            });
             debug('Transaction success!');
           }); // end connection.commit
         }

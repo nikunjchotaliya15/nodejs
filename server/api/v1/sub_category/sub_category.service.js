@@ -19,15 +19,18 @@ var async_series = require('async');
  * @param {[type]}   request [description]
  * @param {Function} cb      [description]
  */
-var addUpdateSubCategoryService = (request, cb) => {
-  debug("sub_category.service -> updateSubCategoryService", request.body);
-  if (request.body.sub_category_name === undefined ||  request.body.sub_category_name === "" || request.body.sub_category_id === undefined || request.body.sub_category_id === "") {
-    cb({
-      status: false,
-      error: constant.requestMessages.ERR_INVALID_CATEGORY_ADD_REQUEST
-    });
-    return;
+var addUpdateSubCategoryService = async (request,response) => {
+
+  var isValidObject = common.validateObject([request.body]);
+  debug("category.service -> updateCategoryService", request.body);
+  var isValid = common.validateParams([request.body.sub_category_id,request.body.category_id,request.body.sub_category_name,request.body.description]);
+  if(!isValidObject){
+    return common.sendResponse(response,constant.requestMessages.ERR_INVALID_CATEGORY_ADD_REQUEST,false);
   }
+  else if(!isValid){
+    return common.sendResponse(response,constant.requestMessages.ERR_INVALID_CATEGORY_ADD_REQUEST,false);
+  }
+
   var sub_categoryID = request.body.sub_category_id;
   var userID = request.session.userInfo.userId;
   var categoryID = request.body.category_id;
@@ -37,26 +40,16 @@ var addUpdateSubCategoryService = (request, cb) => {
   var image = '';
 
   var fileObj = imageObj;
-  if (fileObj != undefined && Object.keys(fileObj).length > 0) {
-
-    otherService.imageUploadMoving(fileObj, constant.appConfig.MEDIA_MOVING_PATH.CATEGORY, function (result) {
-      if (result.status === false) {
-        cb(result);
-        return;
-      }
+  try {
+    if (fileObj != undefined && Object.keys(fileObj).length > 0) {
+      var result = otherService.imageUploadMoving(fileObj, constant.appConfig.MEDIA_MOVING_PATH.CATEGORY);
       image = result.data.file;
-      addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryName, description, image, request, function (data) {
-        cb(data);
-        return;
-      });
-    });
-  } else {
-    addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryName, description, image, request, function (data) {
-      cb(data);
-      return;
-    });
+    }
+    await addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryName, description, image, request,response);
   }
-
+  catch(ex) {
+    return common.sendResponse(response,constant.userMessages.MSG_ERROR_IN_QUERY,false);
+  }
 };
 
 /**
@@ -71,13 +64,15 @@ var addUpdateSubCategoryService = (request, cb) => {
  * @param {[type]}   request          [description]
  * @param {Function} cb               [description]
  */
-function addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryName, description, image, request, cb) {
+
+async function addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryName, description, image, request, response) {
   var fullUrl = common.getGetMediaURL(request);
   var sub_categoryinfo = {};
   sub_categoryinfo.created_by = userID;
   sub_categoryinfo.name = sub_categoryName;
   sub_categoryinfo.description = description;
   sub_categoryinfo.fk_categoryID = categoryID;
+
 
   if (image != '')
     sub_categoryinfo.image = image; //   categoryinfo.imageName = fullUrl + image;
@@ -96,81 +91,37 @@ function addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryNa
       fieldValueInsert.push(fieldValueObj);
     }
   });
-  if (sub_categoryID <= 0) {
-    debug("resulted final Add sub_category object -> ", fieldValueInsert);
-    let sub_category_id = 0;
-    async.series([
-      function(cb) {
-        sub_categoryDAL.checkSubCategoryIsExist(sub_categoryinfo.name, function (result) {
-          if (result.status === true && result.content.length != 0) {
-            cb(constant.categoryMessages.ERR_CATEGORY_EXIST,null);
-            return;
-          }
-          cb();
-        });
-      },
-      function(cb) {
-        sub_categoryDAL.createSubCategory(fieldValueInsert, function (result) {
-          if (result.status === false) {
-            cb(result.error,null);
-            return;
-          }
-          else {
-            sub_category_id= result.content.insertId;
-            cb();
-          }
-        });
-      }],
-    function(err,result) {
-      if (err) {
-        cb({status:false,error:err});
-        return;
+  try {
+    if (sub_categoryID <= 0) {
+      debug("resulted final Add sub_category object -> ", fieldValueInsert);
+
+      let result = await sub_categoryDAL.checkSubCategoryIsExist(sub_categoryinfo.name);
+      if (result.status === true && result.content.length != 0) {
+        return common.sendResponse(response, constant.categoryMessages.ERR_CATEGORY_EXIST,false);
       }
-      cb( { status: true,
-         data: constant.categoryMessages.CATEGORY_ADD_SUCCESS,
-         sub_category_id: sub_category_id });
-         return;
-    });
-  }
-  else {
-    let modifiedObj = {
-      field: "modified_date",
-      fValue: d3.timeFormat(dbDateFormat)(new Date())
-    }
-    async.series ([
-      function(cb) {
-        sub_categoryDAL.checkSubCategoryIDValid(sub_categoryID, function (result) {
-          if (result.status === false) {
-            cb(result.error,null);
-            return;
-          }
-          if (result.content.length === 0) {
-            cb(constant.categoryMessages.ERR_REQUESTED_USER_NO_PERMISSION_OF_CATEGORY_UPDATE,null);
-            return;
-          }
-          fieldValueInsert.push(modifiedObj);
-          cb();
-      });
-    },
-    function(cb) {
-      debug("resulted final Update sub_category object -> ", fieldValueInsert);
-      sub_categoryDAL.updateSubCategory(fieldValueInsert, sub_categoryID, function (result) {
-        if (result.status === false) {
-          cb(result.error,null);
-        }
-        else
-          cb();
-      });
-    }
-  ],
-  function(err,result) {
-    if (err) {
+      if (result.status == true && result.content.length === 0) {
+        let result = await sub_categoryDAL.createSubCategory(fieldValueInsert);
+        console.log("================== ADD ==============================");
+        return common.sendResponse(response, constant.categoryMessages.CATEGORY_ADD_SUCCESS,true);
       }
+    }
     else {
-      cb({ status: true,
-      data: constant.categoryMessages.CATEGORY_UPDATE_SUCCESS })
+      let modifiedObj = {
+        field: "modified_date",
+        fValue: d3.timeFormat(dbDateFormat)(new Date())
+      }
+      let result = await sub_categoryDAL.checkSubCategoryIDValid(sub_categoryID);
+      if (result.content.length === 0) {
+        return common.sendResponse(response, constant.categoryMessages.ERR_REQUESTED_USER_NO_PERMISSION_OF_CATEGORY_UPDATE,false);
+      }
+      fieldValueInsert.push(modifiedObj);
+      debug("resulted final Update sub_category object -> ", fieldValueInsert);
+      let res_update  = await sub_categoryDAL.updateSubCategory(fieldValueInsert, sub_categoryID);
+      return common.sendResponse(response, constant.categoryMessages.CATEGORY_UPDATE_SUCCESS,true);
     }
-  })
+  }
+  catch(ex) {
+    throw ex;
   }
 }
 /**
@@ -181,7 +132,7 @@ function addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryNa
  * @param  {Function} cb      [description]
  * @return {[type]}           [description]
  */
-var getSubCategoryService = (request, cb) => {
+var getSubCategoryService = async function (request,response) {
   debug("SubCategory.service -> getSubCategoryService");
 
   var getPaginationObject = common.getPaginationObject(request);
@@ -195,41 +146,33 @@ var getSubCategoryService = (request, cb) => {
   if (request.params.activeStatus != undefined && request.params.activeStatus != "") {
     if (constant.appConfig.VALID_ACTIVE_STATUS_PARAM.indexOf(request.params.activeStatus) > -1) {
       activeStatus = request.params.activeStatus;
-    } else {
-      cb({
-        status: false,
-        error: constant.otherMessage.INVALID_ACTIVE_PARAM
-      });
-      return;
+    }
+    else {
+      return common.sendResponse(response, constant.categoryMessages.INVALID_ACTIVE_PARAM,false);
     }
   }
 
-  sub_categoryDAL.getSubCategory(sub_categoryID, activeStatus, dbServerDateTime, limit, function (result) {
-    if (result.status == false) {
-      cb({
-        status: false,
-        error: constant.categoryMessages.ERR_NO_CATEGORY_FOUND
-      });
-      return;
-    } else {
-      var fullUrl = common.getGetMediaURL(request);
-      result.content.forEach(function (sub_category) {
+  try {
+    let result =  await sub_categoryDAL.getSubCategory(sub_categoryID, activeStatus, dbServerDateTime, limit);
+    console.log("==================== SUB CATEGORY ==========================");
+    console.log(result);
 
-
-        if (sub_category.image_name != undefined && sub_category.image_name != "") {
-          sub_category.image_name = common.getGetMediaURL(request) + constant.appConfig.MEDIA_UPLOAD_SUBFOLDERS_NAME.CATEGORY + "large/" + sub_category.image_name;
-        } else {
-          sub_category.image_name = common.getNoImageURL(request);
-        }
-      });
-      cb({
-        status: true,
-        data: result.content
-      });
-    }
-  });
+    var fullUrl = common.getGetMediaURL(request);
+    result.content.forEach(function (sub_category) {
+      if (sub_category.image_name != undefined && sub_category.image_name != "") {
+        sub_category.image_name = common.getGetMediaURL(request) + constant.appConfig.MEDIA_UPLOAD_SUBFOLDERS_NAME.CATEGORY + "large/" + sub_category.image_name;
+      }
+      else {
+        sub_category.image_name = common.getNoImageURL(request);
+      }
+    });
+    return common.sendResponse(response, result.content,true);
+  }
+  catch(ex) {
+    debug(ex);
+    return common.sendResponse(response, constant.categoryMessages.ERR_NO_CATEGORY_FOUND,false);
+  }
 };
-
 
 
 /**
@@ -240,47 +183,29 @@ var getSubCategoryService = (request, cb) => {
  * @param  {Function} cb      [description]
  * @return {[type]}           [description]
  */
-var deleteSubCategoryService = (request, cb) => {
+var deleteSubCategoryService = async (request,response) => {
   debug("SubCategory.service -> deleteSubCategoryService", request.params.sub_categoryID);
 
-  if (request.params.sub_categoryID === undefined) {
-    cb({
-      status: false,
-      error: constant.requestMessages.ERR_INVALID_CATEGORY_DELETE_REQUEST
-    });
-    return;
-  } else {
-    var sub_categoryID = request.params.sub_categoryID;
-    // var userID = request.session.userInfo.userId;
+  let isValid = common.validateParams([request.params.sub_categoryID]);
+  if(!isValid){
+      return common.sendResponse(response,constant.categoryMessages.ERR_INVALID_CATEGORY_DELETE_REQUEST,false);
+  }
+  else {
+    try {
+      var sub_categoryID = request.params.sub_categoryID;
 
-    sub_categoryDAL.checkSubCategoryIDValid(sub_categoryID, (result) => {
-      if (result.status === false) {
-        cb(result);
-        return;
-      }
+      let result = await sub_categoryDAL.checkSubCategoryIDValid(sub_categoryID);
       if (result.content.length === 0) {
-        cb({
-          status: false,
-          error: constant.categoryMessages.ERR_REQUESTED_USER_NO_PERMISSION_OF_CATEGORY_REMOVE
-        });
-        return;
+            return common.sendResponse(response,constant.categoryMessages.ERR_REQUESTED_USER_NO_PERMISSION_OF_CATEGORY_REMOVE,false);
       }
-
-      sub_categoryDAL.removeSubCategory(sub_categoryID, (result) => {
-        if (result.status === false) {
-          cb(result);
-          return
-        }
-        cb({
-          status: true,
-          data: constant.categoryMessages.MSG_CATEGORY_REMOVE_SUCCESSFULLY
-        })
-      });
-    });
+      let res_remove = await sub_categoryDAL.removeSubCategory(sub_categoryID);
+      return common.sendResponse(response,constant.categoryMessages.MSG_CATEGORY_REMOVE_SUCCESSFULLY,true);
+    }
+    catch(ex) {
+      return common.sendResponse(response,constant.userMessages.MSG_ERROR_IN_QUERY,false);
+    }
   }
 };
-
-
 
 module.exports = {
   addUpdateSubCategoryService: addUpdateSubCategoryService,
