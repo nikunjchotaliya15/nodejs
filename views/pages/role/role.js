@@ -308,6 +308,7 @@ role = {
     $("#drpUserType").prop("selectedIndex", 0);
     $("#txtRole").val("");
     var moduleGridRows = role.moduleTable.rows().data();
+    console.log(moduleGridRows);
     for (var i = 0; i < moduleGridRows.length; i++) {
       $("#chkCanView_" + moduleGridRows[i].moduleid).prop("checked", false);
       $("#chkCanAddEdit_" + moduleGridRows[i].moduleid).prop("checked", false);

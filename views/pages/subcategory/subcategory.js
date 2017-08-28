@@ -52,6 +52,7 @@ category = {
       })
     }
     category.getData();
+    category.getCategory();
   },
   getData: function () {
     var headers = {
@@ -71,6 +72,32 @@ category = {
       }
     });
   },
+  getCategory : function() {
+    var categoryUrl = Constants.Api.getCategory + "-1/-1";
+    var headers = {
+      Authorization: $.cookie(Constants.User.authToken)
+    };
+    Api.get(categoryUrl, headers, function (error, res) {
+      if (res != undefined && res.status == true) {
+        category.bindSelect("#drpCategory", res.data, "category_id", "category_name");
+      } else if (res != undefined && res.status == false) {
+        common.showMessage(res.error.message, true);
+      } else if (error != undefined && error.status == false) {
+        common.showMessage(error.error.message, true);
+      }
+    });
+  },
+  bindSelect: function (selectId, dataSet, valField, dispValField) {
+    try {
+      var selectOptions = "";
+      for (var i = 0; i < dataSet.length; i++) {
+        selectOptions += '<option value="' + dataSet[i][valField] + '">' + dataSet[i][dispValField] + '</option>'
+      }
+      $(selectId).append(selectOptions);
+    } catch (e) {
+      throw (e);
+    }
+  },
   save: function (event) {
     var validation = formValidation('frmCategory');
     if (category.saveDisabled == false) {
@@ -78,6 +105,7 @@ category = {
         category.saveDisabled = true;
         var data = {};
         data = common.getFormValues($("#frmCategory"));
+
         data.sub_category_id = category.sub_category_id;
         data.imageObj = category.imageObj;
         var headers = {
@@ -135,7 +163,8 @@ category = {
       objModules.subCategory.displayName = "Category";
       common.showHideDiv(false, objModules.subCategory);
       common.fillFormValues($("#frmCategory"), currentCategory);
-
+      var target = $("#drpCategory option[value=" + currentCategory.category_id + "]").index();
+      $("#drpCategory ").prop("selectedIndex", target);
       $('#imageCategory').attr("src", currentCategory.image_name);
     }
   },

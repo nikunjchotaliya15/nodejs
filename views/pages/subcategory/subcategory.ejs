@@ -56,15 +56,17 @@
                                                           <label for="regular1" class="control-label">
                                                               Category*
                                                             </label>
-                                                          <select class="form-control">
-                                                          </select>
+                                                            <select id="drpCategory" class="select-simple form-control" name="category_id" validation="required">
+                                                              <option value="0" disabled selected >Select Category</option>
+                                                            </select>
+                                                            <span type="text" id="drpCategory_validation" class="validationFormControl" style="display:none;">Please Select Category</span>
                                                         </div>
                                                         <div class="form-group pmd-textfield">
                                                             <label for="regular1" class="control-label">
                                                                 Sub Category Name*
                                                               </label>
                                                             <input type="text" id="txtCategoryName" class="form-control" name="sub_category_name" validation="required"><span class="pmd-textfield-focused"></span>
-                                                            <span type="text" id="txtCategoryName_validation" class="validationFormControl" style="display:none;">Category Name Required<span>
+                                                            <span type="text" id="txtCategoryName_validation" class="validationFormControl" style="display:none;">Category Name Required</span>
                                                         </div>
                                                         <div class="form-group pmd-textfield">
                                                             <label class="control-label">Description</label>

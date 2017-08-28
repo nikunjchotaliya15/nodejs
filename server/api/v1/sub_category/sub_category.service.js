@@ -123,7 +123,7 @@ function addUpdateSubCategory(sub_categoryID, userID, categoryID, sub_categoryNa
       }],
     function(err,result) {
       if (err) {
-        cb({status:false,err:err});
+        cb({status:false,error:err});
         return;
       }
       cb( { status: true,
